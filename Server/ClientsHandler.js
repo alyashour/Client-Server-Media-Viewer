@@ -2,18 +2,33 @@ var MTPpacket = require("./MTPResponse"),
 singleton = require("./Singleton");
 
 // You need to add some statements here
-
-
+function createResponse() {
+  MTPpacket.init(MTPpacket.ResponseTypes.NOT_FOUND, true, 0, 0);
+  return MTPpacket.getBytePacket();
+}
 
 module.exports = {
   handleClientJoining: function (sock) {
-        //
-        // Enter your code here
-        //
-        // you may need to develop some helper functions
-        // that are defined outside this export block
-  }
+    //
+    // Enter your code here
+    //
+    // you may need to develop some helper functions
+    // that are defined outside this export block
+    sock.on("data", (data) => { 
+      if (data)
+        try {
+          printPacketBit(data); 
+        } catch (e) {
+          console.warn(
+            `Packet was invalid, could not read. \n
+            Received: ${data}.`)
+        }
+    });
 
+    sock.write(createResponse())
+
+    sock.end();
+  }
 };
 
 function handleClientLeaving(sock) {

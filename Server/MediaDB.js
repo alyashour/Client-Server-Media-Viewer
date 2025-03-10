@@ -9,7 +9,7 @@ let HOST = '127.0.0.1',
 net.bytesWritten = 64 * 1024; // 1MB
 net.bufferSize = 64 * 1024; // 1MB
 
-singleton.init();
+const startTime = singleton.init();
 
 // Create a mediaDB instance, and chain the listen function to it
 // The function passed to net.createServer() becomes the event handler for the 'connection'
@@ -35,7 +35,7 @@ mediaServer.on('connection', (sock) => {
     });
 });
 
-console.log('Server listening on ' + HOST + ':' + PORT);
+console.log(`MediaDB server is started at timestamp: ${startTime} and is listening on ${HOST}:${PORT}`);
 
 
 

@@ -9,8 +9,6 @@ const TIMER_LIMIT = 2 ** 32; // 4294967296
 let timer = Math.floor(Math.random() * (MAX_INIT_VALUE - MIN_INIT_VALUE + 1)) + MIN_INIT_VALUE;
 
 function startTimer() {
-    console.log(`Timer started at: ${timer}`);
-
     setInterval(() => {
         timer = (timer + 1) % TIMER_LIMIT;
     }, TICK_INTERVAL);
@@ -29,7 +27,9 @@ getNextSequenceNumber = (() => {
 module.exports = {
     init: function () {
         _initialized = true;
+        const startTime = timer;
         startTimer();
+        return startTime;
     },
 
     //--------------------------
@@ -50,7 +50,7 @@ module.exports = {
         if (_initialized == false) {
             console.warn("Singleton has not been initialized and timer has not started. Returning init value...")
         }
-        console.log("Current Timer:", timer);
+
         return timer;
     }
 }

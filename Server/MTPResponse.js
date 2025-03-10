@@ -12,9 +12,11 @@ class ResponseError extends Error {
   }
 }
 
-// RESPONSE TYPE
+// REQUEST & RESPONSE TYPES
+let RequestTypes = Object.freeze({
+  QUERY: 0
+})
 let ResponseTypes = Object.freeze({
-  QUERY: 0,
   FOUND: 1,
   NOT_FOUND: 2,
   BUSY: 3,
@@ -37,14 +39,17 @@ function createHeader(responseType, isLast, payloadSize) {
     storeBitPacket(responseHeader, responseType, 5, 3);
   else throw new ResponseError(`Cannot form response, invalid response type ${responseType}.`);
 
+  // sequence number
+  storeBitPacket(responseHeader, singleton.getSequenceNumber(), 8, 24);
+
   // timestamp
-  storeBitPacket(responseHeader, singleton.getTimestamp(), 8, 32);
+  storeBitPacket(responseHeader, singleton.getTimestamp(), 32, 32);
 
   // L?
-  storeBitPacket(responseHeader, isLast, 42, 1);
+  storeBitPacket(responseHeader, isLast, 64, 1);
 
   // payload size
-  storeBitPacket(responseHeader, payloadSize, 43, 31);
+  storeBitPacket(responseHeader, payloadSize, 65, 31);
 
   return responseHeader;
 }
@@ -59,6 +64,7 @@ module.exports = {
   ){
     this.responseHeader = createHeader(responseType, isLast, payloadSize);
     this.payload = payload;
+    this.payloadSize = payloadSize;
   },
   //--------------------------
   //getBytePacket: returns the entire packet in bytes
