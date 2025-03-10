@@ -12,7 +12,8 @@ const DATA_TYPES = {
   fileName: "Image file name"
 }
 
-const MAX_PACKET_SIZE = 1400; // Maximum packet size (in bytes)
+// constants
+const MTP_PROTOCOL_VERSION = 18;
 
 /**
  * Handles the incoming data from the client, processes it, and sends a response.
@@ -28,6 +29,12 @@ async function onData(id, rawData, socket) {
   console.log(`\nClient-${id} requests:`);
   let data = parseRequestPacket(rawData);
   console.log(formatData(data));
+
+  // if the wrong version - reject.
+  if (data["MTP version"] != MTP_PROTOCOL_VERSION) {
+    // ignore
+    return;
+  }
 
   // Retrieve the file data based on the parsed request
   let imgData = await FileManager.getFileData(FileManager.getFilePath(
@@ -78,6 +85,7 @@ module.exports = {
     sock.on("data", (rawData) => { 
       console.log('MTP packet received:');
       try {
+
         onData(id, rawData, sock);  // Process incoming data
       } catch (e) {
         console.warn(

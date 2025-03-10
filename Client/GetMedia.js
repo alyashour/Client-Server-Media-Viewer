@@ -57,9 +57,17 @@ client.on('data', (data) => {
   
   console.log('Server sent:');
   console.log(formatData(headerInfo));
-  
-  saveImage(imageName, data.slice(12, data.length));
-  openImage(imageName);
+
+  if (headerInfo.resType === "FOUND") {
+    saveImage(imageName, data.slice(12, data.length));
+    openImage(imageName);
+  } else if (headerInfo.resType === "NOT_FOUND") {
+    console.log("Image not found, exiting...");
+  } else if (headerInfo.resType === "BUSY") {
+    console.log("Server busy, please try again later. Exiting...");
+  } else {
+    console.log("Could not perform action...");
+  }
 
   process.exit();
 })
