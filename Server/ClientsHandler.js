@@ -80,19 +80,8 @@ module.exports = {
         )
       }
     });
-
-    sock.end();
   }
 };
-
-function handleClientLeaving(sock) {
-        // Enter your code here
-        //
-        // you may need to develop some helper functions
-        // that are defined outside this export block
-  
-}
-
 
 function bytesToString(array) {
   var result = "";

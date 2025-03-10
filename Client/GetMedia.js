@@ -52,23 +52,36 @@ client.on('close', () => {
 });
 
 // if data is received
-client.on('data', (rawData) => {
+client.on('data', (data) => {
   console.log('MTP packet header received:')
 
   // print the packet
-  printPacketBit(rawData);
+  let headerData = data.slice(0, 12);
+  printPacketBit(headerData);
 
   // parse the packet
-  let data = parsePacket(rawData);
+  headerInfo = parsePacket(headerData);
   
   console.log('Server sent:');
-  console.log(formatData(data));
+  console.log(formatData(headerInfo));
+  singleton.receivePacket(headerInfo, data.slice(12, buffer.length)); // save it
+
+  // if the headerInfo says this is the last packet
+  if (headerInfo.l == 1) {
+    // close the client
+    client.end();
+
+    // process the image
+    saveImage(imageName);
+    openImage(imageName);
+  }
 })
 
 // finally, connect the client and send the request packet.
 client.connect({ port, host: serverIP }, () => {
   console.log(`Connected to MediaDB server on: ${serverIP}:${port}\n`);
 
+  console.log("Sending request...");
   MTPpacket.init(version, imageName);
   client.write(MTPpacket.getBytePacket());
 })
@@ -112,10 +125,12 @@ function bytes2string(array) {
 function parsePacket(packet) {
   try {
     let data = {
-      "MTP version": parseBitPacket(packet, 0, 5),
-      "Response Type": formatReqResType(parseBitPacket(packet, 5, 3)),
-      "Sequence Number": parseBitPacket(packet, 8, 24),
-      "Timestamp": parseBitPacket(packet, 32, 32)
+      "version": parseBitPacket(packet, 0, 5),
+      "resType": formatReqResType(parseBitPacket(packet, 5, 3)),
+      "sequenceNumber": parseBitPacket(packet, 8, 24),
+      "timestamp": parseBitPacket(packet, 32, 32),
+      "l": parseBitPacket(packet, 64, 1),
+      "payloadSize": parseBitPacket(packet, 65, 31),
     };
     return data
   } catch (e) {
@@ -124,14 +139,33 @@ function parsePacket(packet) {
 }
 
 function formatData(data) {
-  let out = "";
-  for (const [key, value] of Object.entries(data)) {
-    out += `\t${key} = ${value}\n`;
-  }
-  return out;
+  return `
+  \tMTP version = ${data.version}
+  \tResponse Type = ${data.resType}
+  \tSequence Number = ${data.sequenceNumber}
+  \tTimestamp = ${data.timestamp}
+  \tIs last? = ${data.l}
+  `;
 }
 
 function formatReqResType(num) {
   const ReqResTypes = {...MTPpacket.RequestTypes, ...MTPpacket.ResponseTypes};
   return Object.keys(ReqResTypes).find(key => ReqResTypes[key] === num) || "UNKNOWN";
+}
+
+function saveImage(imagePath) {
+  console.log("\nSaving image...")
+  const buffer = Buffer.concat(singleton.buffer.map((m) => m.packet.slice(12)));
+  fs.writeFileSync(imagePath, buffer);
+  console.log(`Image saved as ${imagePath}`);
+}
+
+function openImage(imagePath) {
+  console.log("\nOpening image...");
+  open(imagePath).then(() => {
+    console.log("Opened " + imagePath + "!")
+  })
+  .catch((e) => {
+    console.error("Could not open image...\n" + e)
+  })
 }

@@ -30,6 +30,20 @@ module.exports = {
     init: function () {
         _initialized = true;
         startTimer();
+        this.buffer = [];
+    },
+
+    receivePacket: function (
+        headerInfo,
+        packet
+    ) {
+        const data = {
+            ...headerInfo,
+            packet
+        }
+
+        this.buffer.push(data);
+        this.buffer.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
     },
 
     //--------------------------
