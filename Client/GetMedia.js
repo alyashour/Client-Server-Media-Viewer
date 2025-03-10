@@ -67,6 +67,8 @@ client.on('data', (data) => {
   
   saveImage(imageName, data.slice(12, data.length));
   openImage(imageName);
+
+  process.exit();
 })
 
 // finally, connect the client and send the request packet.
