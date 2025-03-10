@@ -142,7 +142,6 @@ function formatData(data) {
   \tResponse Type = ${data.resType}
   \tSequence Number = ${data.sequenceNumber}
   \tTimestamp = ${data.timestamp}
-  \tIs last? = ${data.l}
   `;
 }
 
