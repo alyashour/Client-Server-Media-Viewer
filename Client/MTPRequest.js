@@ -64,7 +64,7 @@ module.exports = {
     storeBitPacket(this.requestHeader, mediaType, 64, 4);
 
     // media file name size (in bytes)
-    const fileNameBytes = stringToBytes(fileName);
+    const fileNameBytes = stringToBytes(fileName.split('.')[0]);
     storeBitPacket(this.requestHeader, fileNameBytes.length, 68, 28);
     
     // payload

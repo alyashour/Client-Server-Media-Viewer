@@ -15,12 +15,25 @@ class ResponseError extends Error {
 // REQUEST & RESPONSE TYPES
 let RequestTypes = Object.freeze({
   QUERY: 0
-})
+});
 let ResponseTypes = Object.freeze({
   FOUND: 1,
   NOT_FOUND: 2,
   BUSY: 3,
-})
+});
+
+// MEDIA TYPE
+let MediaTypes = Object.freeze({
+  JPEG: 0,
+  BMP: 1,
+  TIFF: 2,
+  PNG: 3,
+  GIF: 4,
+  RAW: 5,
+  MP4: 6,
+  AVI: 7, 
+  MOV: 8,
+});
 
 function isValidResponse(response) {
   return Object.values(ResponseTypes).includes(response);
@@ -57,6 +70,7 @@ function createHeader(responseType, isLast, payloadSize) {
 module.exports = {
   RequestTypes,
   ResponseTypes,
+  MediaTypes,
   init: function (
     responseType,
     isLast,

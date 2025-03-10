@@ -1,10 +1,62 @@
+
+const FileManager = require("./FileManager");
 var MTPpacket = require("./MTPResponse"),
 singleton = require("./Singleton");
 
-// You need to add some statements here
-function createResponse() {
-  MTPpacket.init(MTPpacket.ResponseTypes.NOT_FOUND, true, 0, 0);
-  return MTPpacket.getBytePacket();
+const DATA_TYPES = {
+  version: "MTP version",
+  timestamp: "Timestamp",
+  reqType: "Request type",
+  fileExtension: "Image file extension(s)",
+  fileName: "Image file name"
+}
+
+const MAX_PACKET_SIZE = 1400; // in bytes
+
+async function onData(id, rawData, socket) {
+  // print binary data
+  printPacketBit(rawData); 
+
+  // print requests
+  console.log(`\nClient-${id} requests:`);
+  let data = parseRequestPacket(rawData);
+  console.log(formatData(data));
+
+  // get the file 
+  let imgData = await FileManager.getFileData(FileManager.getFilePath(
+    data[DATA_TYPES.fileName] + "." + data[DATA_TYPES.fileExtension]
+  ));
+
+  // if an error occurred
+  if (imgData == -1) { 
+    MTPpacket.init(
+      MTPpacket.ResponseTypes.NOT_FOUND, 
+      true, 
+      0, 
+      0
+    );
+    const packet = MTPpacket.getBytePacket();
+    socket.write(packet)
+    return;
+  }
+    
+  // send back the img data, potentially in multiple packets
+  process.stdout.write(`Sending packets to Client-${id}...`)
+  while (imgData.length > 0) {
+    let chunk = imgData.slice(0, MAX_PACKET_SIZE);
+    imgData = imgData.slice(MAX_PACKET_SIZE);
+    const isLastPacket = data.length === 0;
+
+    MTPpacket.init(
+      MTPpacket.ResponseTypes.FOUND, 
+      isLastPacket, 
+      chunk.length, 
+      chunk
+    );
+    const packet = MTPpacket.getBytePacket();
+    socket.write(packet)
+  }
+  console.log(`Done!`)
 }
 
 module.exports = {
@@ -20,21 +72,14 @@ module.exports = {
     sock.on("data", (rawData) => { 
       console.log('MTP packet received:');
       try {
-        // print binary data
-        printPacketBit(rawData); 
-
-        // print requests
-        console.log(`Client-${id} requests:`);
-        let data = parseRequestPacket(rawData);
-        console.log(formatData(data));
+        onData(id, rawData, sock);
       } catch (e) {
         console.warn(
           `Packet was invalid, could not read. \n
-          Received: ${rawData}.`)
+          Received: ${rawData}.`
+        )
       }
     });
-
-    sock.write(createResponse())
 
     sock.end();
   }
@@ -77,6 +122,7 @@ function parseBitPacket(packet, offset, length) {
   }
   return number;
 }
+
 // Prints the entire packet in bits format
 function printPacketBit(packet) {
   var bitString = "";
@@ -96,9 +142,10 @@ function parseRequestPacket(packet) {
     const version = parseBitPacket(packet, 0, 5);
     const timestamp = parseBitPacket(packet, 32, 32);
     const reqType = formatReqResType(parseBitPacket(packet, 30, 2));
-    const fileExtension = parseBitPacket(packet, 64, 4);
+    const fileExtension = formatExtension(parseBitPacket(packet, 64, 4));
     const fileNameLength = parseBitPacket(packet, 68, 28);
-    const fileName = parseBitPacket(packet, 96, fileNameLength)
+    const fileName = bytesToString(packet.slice(12, 12 + fileNameLength));
+    
     let data = {
       "MTP version": version,
       "Timestamp": timestamp,
@@ -106,6 +153,7 @@ function parseRequestPacket(packet) {
       "Image file extension(s)": fileExtension,
       "Image file name": fileName
     };
+    
     return data
   } catch (e) {
     throw new errors.ResponseParseError(`Could not parse response.\n${e}`);
@@ -123,4 +171,8 @@ function formatData(data) {
 function formatReqResType(num) {
   const ReqResTypes = {...MTPpacket.RequestTypes, ...MTPpacket.ResponseTypes};
   return Object.keys(ReqResTypes).find(key => ReqResTypes[key] === num) || `UNKNOWN ${num}`;
+}
+
+function formatExtension(num) {
+  return Object.keys(MTPpacket.MediaTypes).find(key => MTPpacket.MediaTypes[key] === num) || `UNKNOWN ${num}`;
 }
