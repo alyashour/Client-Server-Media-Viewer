@@ -42,20 +42,14 @@ async function onData(id, rawData, socket) {
     
   // send back the img data, potentially in multiple packets
   process.stdout.write(`Sending packets to Client-${id}...`)
-  while (imgData.length > 0) {
-    let chunk = imgData.slice(0, MAX_PACKET_SIZE);
-    imgData = imgData.slice(MAX_PACKET_SIZE);
-    const isLastPacket = data.length === 0;
-
-    MTPpacket.init(
-      MTPpacket.ResponseTypes.FOUND, 
-      isLastPacket, 
-      chunk.length, 
-      chunk
-    );
-    const packet = MTPpacket.getBytePacket();
-    socket.write(packet)
-  }
+  MTPpacket.init(
+    MTPpacket.ResponseTypes.FOUND,
+    true,
+    imgData.length,
+    imgData
+  )
+  const packet = MTPpacket.getBytePacket();
+  socket.write(MTPpacket.getBytePacket());
   console.log(`Done!`)
 }
 

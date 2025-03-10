@@ -64,17 +64,9 @@ client.on('data', (data) => {
   
   console.log('Server sent:');
   console.log(formatData(headerInfo));
-  singleton.receivePacket(headerInfo, data.slice(12, buffer.length)); // save it
-
-  // if the headerInfo says this is the last packet
-  if (headerInfo.l == 1) {
-    // close the client
-    client.end();
-
-    // process the image
-    saveImage(imageName);
-    openImage(imageName);
-  }
+  
+  saveImage(imageName, data.slice(12, data.length));
+  openImage(imageName);
 })
 
 // finally, connect the client and send the request packet.
@@ -153,10 +145,9 @@ function formatReqResType(num) {
   return Object.keys(ReqResTypes).find(key => ReqResTypes[key] === num) || "UNKNOWN";
 }
 
-function saveImage(imagePath) {
+function saveImage(imagePath, data) {
   console.log("\nSaving image...")
-  const buffer = Buffer.concat(singleton.buffer.map((m) => m.packet.slice(12)));
-  fs.writeFileSync(imagePath, buffer);
+  fs.writeFileSync(imagePath, data);
   console.log(`Image saved as ${imagePath}`);
 }
 
