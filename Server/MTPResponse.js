@@ -1,14 +1,64 @@
-// You may need to add some statements here
+let singleton = require("./Singleton.js");
 
+// DEFAULTS
+HEADER_SIZE = 12 // bytes
+MTP_VERSION = 0b10010 // 18
+
+// ERRORS
+class ResponseError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+// RESPONSE TYPE
+let ResponseTypes = Object.freeze({
+  QUERY: 0,
+  FOUND: 1,
+  NOT_FOUND: 2,
+  BUSY: 3,
+})
+
+function isValidResponse(response) {
+  return Object.values(ResponseTypes).includes(response);
+}
+
+// internal methods
+function createHeader(responseType, isLast, payloadSize) {
+  // create the packet
+  let responseHeader = new Buffer.alloc(HEADER_SIZE);
+
+  // version
+  storeBitPacket(responseHeader, MTP_VERSION, 0, 5); // set the version to 18, 5 bits
+
+  // response type
+  if (isValidResponse(responseType))
+    storeBitPacket(responseHeader, responseType, 5, 3);
+  else throw new ResponseError(`Cannot form response, invalid response type ${responseType}.`);
+
+  // timestamp
+  storeBitPacket(responseHeader, singleton.getTimestamp(), 8, 32);
+
+  // L?
+  storeBitPacket(responseHeader, isLast, 42, 1);
+
+  // payload size
+  storeBitPacket(responseHeader, payloadSize, 43, 31);
+
+  return responseHeader;
+}
 
 module.exports = {
-
-  //Add some statements as needed here
-
-  init: function (){
-          //
-        // enter your code here
-        //
+  ResponseTypes,
+  init: function (
+    responseType,
+    isLast,
+    payloadSize,
+    payload
+  ){
+    this.responseHeader = createHeader(responseType, isLast, payloadSize);
+    this.payload = payload;
   },
   //--------------------------
   //getBytePacket: returns the entire packet in bytes
@@ -55,4 +105,3 @@ function printPacketBit(packet) {
   }
   console.log(bitString);
 }
-
