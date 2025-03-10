@@ -27,13 +27,6 @@ const port = split[1];
 const imageName = args.q;
 const version = args.v;
 
-// Enter your code for the client functionality here
-// You should connect to the server and send the request packet
-// You should receive the response packet from the server
-// You should print the response packet in bits format
-// You should extract the media data from the response packet
-// You should save the image data to a file
-
 // create client
 const client = new net.Socket();
 
@@ -80,8 +73,7 @@ client.connect({ port, host: serverIP }, () => {
   client.write(MTPpacket.getBytePacket());
 })
 
-//some helper functions
-// return integer value of the extracted bits fragment
+// Helper function to return integer value of the extracted bits fragment
 function parseBitPacket(packet, offset, length) {
   let number = "";
   for (var i = 0; i < length; i++) {
@@ -94,7 +86,7 @@ function parseBitPacket(packet, offset, length) {
   return number;
 }
 
-// Prints the entire packet in bits format
+// Helper function to print the entire packet in bits format
 function printPacketBit(packet) {
   var bitString = "";
 
@@ -108,6 +100,7 @@ function printPacketBit(packet) {
   console.log(bitString);
 }
 
+// Helper function to convert bytes array to string
 function bytes2string(array) {
   var result = "";
   for (var i = 0; i < array.length; ++i) {
@@ -116,6 +109,7 @@ function bytes2string(array) {
   return result;
 }
 
+// Helper function to parse the packet
 function parsePacket(packet) {
   try {
     let data = {
@@ -132,6 +126,7 @@ function parsePacket(packet) {
   }
 }
 
+// Helper function to format the parsed data
 function formatData(data) {
   return `
   \tMTP version = ${data.version}
@@ -142,17 +137,20 @@ function formatData(data) {
   `;
 }
 
+// Helper function to format request/response type
 function formatReqResType(num) {
   const ReqResTypes = {...MTPpacket.RequestTypes, ...MTPpacket.ResponseTypes};
   return Object.keys(ReqResTypes).find(key => ReqResTypes[key] === num) || "UNKNOWN";
 }
 
+// Helper function to save the image data to a file
 function saveImage(imagePath, data) {
   console.log("\nSaving image...")
   fs.writeFileSync(imagePath, data);
   console.log(`Image saved as ${imagePath}`);
 }
 
+// Helper function to open the saved image
 function openImage(imagePath) {
   console.log("\nOpening image...");
   open(imagePath).then(() => {

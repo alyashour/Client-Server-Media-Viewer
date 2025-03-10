@@ -1,8 +1,9 @@
-
+// Required modules
 const FileManager = require("./FileManager");
 var MTPpacket = require("./MTPResponse"),
 singleton = require("./Singleton");
 
+// Constants for data types
 const DATA_TYPES = {
   version: "MTP version",
   timestamp: "Timestamp",
@@ -11,23 +12,29 @@ const DATA_TYPES = {
   fileName: "Image file name"
 }
 
-const MAX_PACKET_SIZE = 1400; // in bytes
+const MAX_PACKET_SIZE = 1400; // Maximum packet size (in bytes)
 
+/**
+ * Handles the incoming data from the client, processes it, and sends a response.
+ * @param {number} id - The unique client ID.
+ * @param {Buffer} rawData - The raw data received from the client.
+ * @param {Object} socket - The socket object for communication.
+ */
 async function onData(id, rawData, socket) {
-  // print binary data
+  // Print binary data in packet
   printPacketBit(rawData); 
 
-  // print requests
+  // Print parsed request details
   console.log(`\nClient-${id} requests:`);
   let data = parseRequestPacket(rawData);
   console.log(formatData(data));
 
-  // get the file 
+  // Retrieve the file data based on the parsed request
   let imgData = await FileManager.getFileData(FileManager.getFilePath(
     data[DATA_TYPES.fileName] + "." + data[DATA_TYPES.fileExtension]
   ));
 
-  // if an error occurred
+  // If file not found, send "not found" response
   if (imgData == -1) { 
     MTPpacket.init(
       MTPpacket.ResponseTypes.NOT_FOUND, 
@@ -40,43 +47,52 @@ async function onData(id, rawData, socket) {
     return;
   }
     
-  // send back the img data, potentially in multiple packets
+  // If file is found, send the file data in packets
   process.stdout.write(`Sending packets to Client-${id}...`)
   MTPpacket.init(
     MTPpacket.ResponseTypes.FOUND,
     true,
     imgData.length,
     imgData
-  )
+  );
   const packet = MTPpacket.getBytePacket();
-  socket.write(MTPpacket.getBytePacket());
+  socket.write(packet);  // Send the first packet
   console.log(`Done!`)
 }
 
 module.exports = {
+  /**
+   * Handles a client connection and reads data from the client socket.
+   * Logs connection details and processes data on 'data' event.
+   * @param {Object} sock - The socket object for the client connection.
+   */
   handleClientJoining: function (sock) {
-    // log
+    // Log client connection
     console.log(`Client joined: ${sock.remoteAddress}\n`);
 
-    // log joining
+    // Log client connection with timestamp
     const id = singleton.getTimestamp();
     console.log(`Client-${id} is connected at timestamp: ${id}`);
 
-    // read data from client socket
+    // Read data from client socket
     sock.on("data", (rawData) => { 
       console.log('MTP packet received:');
       try {
-        onData(id, rawData, sock);
+        onData(id, rawData, sock);  // Process incoming data
       } catch (e) {
         console.warn(
-          `Packet was invalid, could not read. \n
-          Received: ${rawData}.`
+          `Packet was invalid, could not read. \nReceived: ${rawData}.`
         )
       }
     });
   }
 };
 
+/**
+ * Converts a byte array to a string.
+ * @param {Array} array - The byte array to convert.
+ * @returns {string} The resulting string.
+ */
 function bytesToString(array) {
   var result = "";
   for (var i = 0; i < array.length; ++i) {
@@ -85,6 +101,11 @@ function bytesToString(array) {
   return result;
 }
 
+/**
+ * Converts a byte array to a number.
+ * @param {Array} array - The byte array to convert.
+ * @returns {number} The resulting number.
+ */
 function bytes2number(array) {
   var result = "";
   for (var i = 0; i < array.length; ++i) {
@@ -93,11 +114,17 @@ function bytes2number(array) {
   return result;
 }
 
-// return integer value of a subset bits
+/**
+ * Returns an integer value of a subset of bits from the packet.
+ * @param {Buffer} packet - The packet to parse.
+ * @param {number} offset - The starting bit position.
+ * @param {number} length - The number of bits to extract.
+ * @returns {number} The extracted integer value.
+ */
 function parseBitPacket(packet, offset, length) {
   let number = "";
   for (var i = 0; i < length; i++) {
-    // let us get the actual byte position of the offset
+    // Get the actual byte position of the offset
     let bytePosition = Math.floor((offset + i) / 8);
     let bitPosition = 7 - ((offset + i) % 8);
     let bit = (packet[bytePosition] >> bitPosition) % 2;
@@ -106,20 +133,29 @@ function parseBitPacket(packet, offset, length) {
   return number;
 }
 
-// Prints the entire packet in bits format
+/**
+ * Prints the entire packet in a bit format (binary).
+ * @param {Buffer} packet - The packet to print.
+ */
 function printPacketBit(packet) {
   var bitString = "";
 
   for (var i = 0; i < packet.length; i++) {
-    // To add leading zeros
+    // Add leading zeros to the binary representation
     var b = "00000000" + packet[i].toString(2);
-    // To print 4 bytes per line
+    // Print 4 bytes per line for better readability
     if (i > 0 && i % 4 == 0) bitString += "\n";
     bitString += " " + b.substr(b.length - 8);
   }
   console.log(bitString);
 }
 
+/**
+ * Parses the raw data packet and extracts relevant request information.
+ * @param {Buffer} packet - The packet to parse.
+ * @returns {Object} The parsed request data.
+ * @throws Will throw an error if parsing fails.
+ */
 function parseRequestPacket(packet) {
   try {
     const version = parseBitPacket(packet, 0, 5);
@@ -143,6 +179,11 @@ function parseRequestPacket(packet) {
   }
 }
 
+/**
+ * Formats the parsed data as a string for display.
+ * @param {Object} data - The parsed data to format.
+ * @returns {string} The formatted string.
+ */
 function formatData(data) {
   let out = "";
   for (const [key, value] of Object.entries(data)) {
@@ -151,11 +192,21 @@ function formatData(data) {
   return out;
 }
 
+/**
+ * Formats the request/response type as a string based on the number.
+ * @param {number} num - The request/response type number.
+ * @returns {string} The formatted string representation of the type.
+ */
 function formatReqResType(num) {
   const ReqResTypes = {...MTPpacket.RequestTypes, ...MTPpacket.ResponseTypes};
   return Object.keys(ReqResTypes).find(key => ReqResTypes[key] === num) || `UNKNOWN ${num}`;
 }
 
+/**
+ * Formats the file extension based on the number.
+ * @param {number} num - The file extension number.
+ * @returns {string} The formatted string representation of the extension.
+ */
 function formatExtension(num) {
   return Object.keys(MTPpacket.MediaTypes).find(key => MTPpacket.MediaTypes[key] === num) || `UNKNOWN ${num}`;
 }

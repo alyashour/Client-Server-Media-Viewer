@@ -25,6 +25,11 @@ let MediaTypes = Object.freeze({
   MOV: 8,
 });
 
+/**
+ * Get the media type based on the file extension.
+ * @param {string} fileName - The name of the file.
+ * @returns {number} - The media type or -1 if not supported.
+ */
 function getMediaType(fileName) {
   if (typeof fileName !== "string") return -1;
   
@@ -38,6 +43,11 @@ module.exports = {
   RequestTypes,
   MediaTypes,
   // You may need to add some statements here
+  /**
+   * Initialize the request header and payload.
+   * @param {number} version - The version of the request.
+   * @param {string} fileName - The name of the media file.
+   */
   init: function (
     version,
     fileName
@@ -86,6 +96,11 @@ module.exports = {
   },
 };
 
+/**
+ * Convert a string to an array of bytes.
+ * @param {string} str - The string to convert.
+ * @returns {Array} - The array of bytes.
+ */
 function stringToBytes(str) {
   var ch,
     st,
@@ -105,7 +120,13 @@ function stringToBytes(str) {
   return re;
 }
 
-// Store integer value into the packet bit stream
+/**
+ * Store an integer value into the packet bit stream.
+ * @param {Buffer} packet - The packet buffer.
+ * @param {number} value - The value to store.
+ * @param {number} offset - The bit offset.
+ * @param {number} length - The number of bits.
+ */
 function storeBitPacket(packet, value, offset, length) {
   // let us get the actual byte position of the offset
   let lastBitPosition = offset + length - 1;

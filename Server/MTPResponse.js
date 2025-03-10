@@ -35,11 +35,25 @@ let MediaTypes = Object.freeze({
   MOV: 8,
 });
 
+/**
+ * Checks if the response type is valid.
+ * @param {number} response - The response type to check.
+ * @returns {boolean} - True if the response type is valid, false otherwise.
+ */
 function isValidResponse(response) {
   return Object.values(ResponseTypes).includes(response);
 }
 
 // internal methods
+
+/**
+ * Creates the header for the response packet.
+ * @param {number} responseType - The type of the response.
+ * @param {boolean} isLast - Indicates if this is the last packet.
+ * @param {number} payloadSize - The size of the payload.
+ * @returns {Buffer} - The response header.
+ * @throws {ResponseError} - If the response type is invalid.
+ */
 function createHeader(responseType, isLast, payloadSize) {
   // create the packet
   let responseHeader = new Buffer.alloc(HEADER_SIZE);
@@ -71,6 +85,13 @@ module.exports = {
   RequestTypes,
   ResponseTypes,
   MediaTypes,
+  /**
+   * Initializes the response packet.
+   * @param {number} responseType - The type of the response.
+   * @param {boolean} isLast - Indicates if this is the last packet.
+   * @param {number} payloadSize - The size of the payload.
+   * @param {Buffer} payload - The payload data.
+   */
   init: function (
     responseType,
     isLast,
@@ -84,6 +105,10 @@ module.exports = {
   //--------------------------
   //getBytePacket: returns the entire packet in bytes
   //--------------------------
+  /**
+   * Returns the entire packet in bytes.
+   * @returns {Buffer} - The complete packet.
+   */
   getBytePacket: function () {
     let packet = new Buffer.alloc(this.payloadSize + HEADER_SIZE);
     //construct the packet = header + payload
@@ -96,7 +121,13 @@ module.exports = {
   },
 };
 
-// Store integer value into the packet bit stream
+/**
+ * Stores an integer value into the packet bit stream.
+ * @param {Buffer} packet - The packet to store the value in.
+ * @param {number} value - The value to store.
+ * @param {number} offset - The bit offset to start storing the value.
+ * @param {number} length - The number of bits to store the value in.
+ */
 function storeBitPacket(packet, value, offset, length) {
   // let us get the actual byte position of the offset
   let lastBitPosition = offset + length - 1;
@@ -113,7 +144,11 @@ function storeBitPacket(packet, value, offset, length) {
     lastBitPosition--;
   }
 }
-// Prints the entire packet in bits format
+
+/**
+ * Prints the entire packet in bits format.
+ * @param {Buffer} packet - The packet to print.
+ */
 function printPacketBit(packet) {
   var bitString = "";
 
