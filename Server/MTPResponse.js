@@ -54,7 +54,7 @@ function isValidResponse(response) {
  * @returns {Buffer} - The response header.
  * @throws {ResponseError} - If the response type is invalid.
  */
-function createHeader(responseType, isLast, payloadSize) {
+function createHeader(responseType, isLast, payloadSize, sequenceNumber) {
   // create the packet
   let responseHeader = new Buffer.alloc(HEADER_SIZE);
 
@@ -67,7 +67,7 @@ function createHeader(responseType, isLast, payloadSize) {
   else throw new ResponseError(`Cannot form response, invalid response type ${responseType}.`);
 
   // sequence number
-  storeBitPacket(responseHeader, singleton.getSequenceNumber(), 8, 24);
+  storeBitPacket(responseHeader, sequenceNumber, 8, 24);
 
   // timestamp
   storeBitPacket(responseHeader, singleton.getTimestamp(), 32, 32);
@@ -96,9 +96,10 @@ module.exports = {
     responseType,
     isLast,
     payloadSize,
-    payload
+    payload,
+    sequenceNumber
   ){
-    this.responseHeader = createHeader(responseType, isLast, payloadSize);
+    this.responseHeader = createHeader(responseType, isLast, payloadSize, sequenceNumber);
     this.payload = payload;
     this.payloadSize = payloadSize;
   },

@@ -69,14 +69,24 @@ async function doQuery(data, socket, id) {
     
   // If file is found, send the file data in packets
   process.stdout.write(`Sending packets to Client-${id}...`)
-  MTPpacket.init(
-    MTPpacket.ResponseTypes.FOUND,
-    true,
-    imgData.length,
-    imgData
-  );
-  const packet = MTPpacket.getBytePacket();
-  socket.write(packet);  // Send the first packet
+  
+  const CHUNK_SIZE = 900; // Define the size of each packet
+  let sequenceNumber = 0;
+  for (let i = 0; i < imgData.length; i += CHUNK_SIZE) {
+    const chunk = imgData.slice(i, i + CHUNK_SIZE);
+    const isLast = (i + CHUNK_SIZE) >= imgData.length ? 1 : 0;
+    
+    MTPpacket.init(
+      MTPpacket.ResponseTypes.FOUND,
+      isLast,
+      chunk.length,
+      chunk,
+      sequenceNumber++
+    );
+    const packet = MTPpacket.getBytePacket();
+    socket.write(packet);  // Send the packet
+    await new Promise(resolve => setTimeout(resolve, 10)); // Add a small delay
+  }
   console.log(`Done!`)
 }
 

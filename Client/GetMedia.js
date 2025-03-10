@@ -54,23 +54,30 @@ client.on('data', (data) => {
   printPacketBit(headerData);
 
   // parse the packet
-  headerInfo = parsePacket(headerData);
+  let headerInfo = parsePacket(headerData);
   
   console.log('Server sent:');
   console.log(formatData(headerInfo));
 
   if (headerInfo.resType === "FOUND") {
-    saveImage(imageName, data.slice(12, data.length));
-    openImage(imageName);
+    singleton.receivePacket(headerInfo, data.slice(12, data.length));
+    
+    if (headerInfo.l) { // If this is the last packet
+      const assembledData = Buffer.concat(singleton.buffer.map(packet => packet.packet));
+      saveImage(imageName, assembledData);
+      openImage(imageName);
+      process.exit();
+    }
   } else if (headerInfo.resType === "NOT_FOUND") {
     console.log("Image not found, exiting...");
+    process.exit();
   } else if (headerInfo.resType === "BUSY") {
     console.log("Server busy, please try again later. Exiting...");
+    process.exit();
   } else {
     console.log("Could not perform action...");
+    process.exit();
   }
-
-  process.exit();
 })
 
 // finally, connect the client and send the request packet.
