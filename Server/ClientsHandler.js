@@ -21,7 +21,7 @@ const MTP_PROTOCOL_VERSION = 18;
  * @param {Buffer} rawData - The raw data received from the client.
  * @param {Object} socket - The socket object for communication.
  */
-async function onData(id, rawData, socket) {
+function onData(id, rawData, socket) {
   // Print binary data in packet
   printPacketBit(rawData); 
 
@@ -33,9 +33,22 @@ async function onData(id, rawData, socket) {
   // if the wrong version - reject.
   if (data["MTP version"] != MTP_PROTOCOL_VERSION) {
     // ignore
+    console.log("Invalid version request! Ignoring...");
     return;
   }
 
+  // if a query, perform the query
+  if (data["Request type"] == "QUERY") {
+    doQuery(data, socket, id);
+  } else {
+    // ignore
+    console.log("Invalid Request type, ignoring...");
+    socket.end();
+    return;
+  }
+}
+
+async function doQuery(data, socket, id) {
   // Retrieve the file data based on the parsed request
   let imgData = await FileManager.getFileData(FileManager.getFilePath(
     data[DATA_TYPES.fileName] + "." + data[DATA_TYPES.fileExtension]

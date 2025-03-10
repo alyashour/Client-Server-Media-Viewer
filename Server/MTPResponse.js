@@ -2,7 +2,7 @@ let singleton = require("./Singleton.js");
 
 // DEFAULTS
 HEADER_SIZE = 12 // bytes
-MTP_VERSION = 0b10010 // 18
+MTP_VERSION = 4 // 18
 
 // ERRORS
 class ResponseError extends Error {

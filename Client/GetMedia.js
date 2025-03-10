@@ -42,6 +42,7 @@ client.on('end', () => {
 
 client.on('close', () => {
   console.log('Connection closed.');
+  process.exit();
 });
 
 // if data is received
