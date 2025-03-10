@@ -1,0 +1,9 @@
+{
+  "name": "se3314b-assignment1",
+  "version": "2.0.0",
+  "description": "",
+  "main": "../Client/GetMedia.js",
+  "dependencies": {
+    "open": "^7.4.0"
+  }
+}
