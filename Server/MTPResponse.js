@@ -55,6 +55,7 @@ function createHeader(responseType, isLast, payloadSize) {
 }
 
 module.exports = {
+  RequestTypes,
   ResponseTypes,
   init: function (
     responseType,
