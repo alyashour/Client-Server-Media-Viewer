@@ -1,7 +1,9 @@
 # Client/Server Media Viewer
 
+![Demo](./assets/output.gif)
+
 ## Overview
-This project is a simple client-server application built using Node.js. 
+This project is a client-server application built using Node.js. 
 
 The server provides a remote media management system where clients can request images or videos, download them, and display them using the default media viewer of their operating system. 
 
